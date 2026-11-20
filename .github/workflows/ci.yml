@@ -45,7 +45,11 @@ jobs:
         run: |
           docker compose -f docker/compose.yaml up -d --build --wait
           curl --fail --retry 10 --retry-connrefused http://127.0.0.1:8080/health
-          curl --fail http://127.0.0.1:8080/api/v1/csrf/
+          csrf=$(curl --fail --silent -c /tmp/bilim-smoke-cookies http://127.0.0.1:8080/api/v1/csrf/ | python -c 'import json, sys; print(json.load(sys.stdin)["csrf"])')
+          curl --fail --silent -b /tmp/bilim-smoke-cookies -c /tmp/bilim-smoke-cookies \
+            -H 'Origin: http://127.0.0.1:8080' -H "X-CSRFToken: $csrf" -H 'Content-Type: application/json' \
+            --data '{"name":"CI smoke test","grade":7}' http://127.0.0.1:8080/api/v1/login/
+          curl --fail --silent -b /tmp/bilim-smoke-cookies http://127.0.0.1:8080/api/v1/home/ | grep -F 'CI smoke test'
           curl --fail http://127.0.0.1:8080/test/ | grep -F '/assets/'
           curl --fail http://127.0.0.1:8080/manifest.webmanifest | grep -F '"display": "standalone"'
           curl --fail http://127.0.0.1:8080/sw.js | grep -F '/offline.html'
