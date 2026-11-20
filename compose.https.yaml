@@ -1,0 +1,15 @@
+services:
+  nginx:
+    ports:
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+      NGINX_ENVSUBST_FILTER: ^DOMAIN$
+    volumes:
+      - ./deploy/https.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./deploy/acme:/var/www/certbot:ro
+      - ./deploy/proxy.conf:/etc/nginx/proxy-school.conf:ro
+  app:
+    environment:
+      COOKIE_SECURE: "1"

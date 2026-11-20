@@ -1,0 +1,58 @@
+:root{font-family:"Segoe UI",Arial,sans-serif;color:#15312d;background:#f5f8f4;line-height:1.55;--dark:#103d34;--green:#14634f;--muted:#4d655e;--line:#d9e5dc;--white:#fff;--lime:#d9fb92}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column}
+.shell{width:min(1120px,calc(100% - 40px));margin-inline:auto}
+.top{background:#fff;border-bottom:1px solid var(--line)}
+.bar,.row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.bar{min-height:74px}
+.brand{display:inline-flex;align-items:center;gap:10px;font-size:21px;font-weight:800;text-decoration:none;color:var(--dark)}
+.mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--dark);color:var(--lime)}
+nav,.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+a{color:var(--green);text-underline-offset:3px}
+nav a{font-weight:650}
+main{flex:1;padding-block:42px 56px}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(2rem,5vw,3.6rem);line-height:1.08;letter-spacing:-.04em}
+h2{font-size:1.55rem;line-height:1.2}
+h3{font-size:1.12rem}
+.stack{display:grid;gap:20px}
+.hero,.card{padding:clamp(20px,4vw,38px);border-radius:24px}
+.hero{position:relative;overflow:hidden;background:var(--dark);color:#fff;display:grid;gap:16px;align-content:center;min-height:225px}
+.hero:after{content:"";width:300px;height:300px;border:1px solid #ffffff26;border-radius:50%;position:absolute;right:-120px;bottom:-150px;box-shadow:0 0 0 32px #ffffff0b,0 0 0 64px #ffffff09;pointer-events:none}
+.hero p{color:#e0efe6;max-width:53ch}
+.eyebrow{color:var(--lime);font-size:.88rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.card{background:#fff;border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.split{display:grid;grid-template-columns:1.25fr 1fr;gap:20px}
+.split .hero{min-height:415px}
+.band{display:grid;gap:14px;padding:24px}
+.band strong,.metric{font-size:2.25rem;line-height:1.15;letter-spacing:-.05em;color:var(--dark)}
+.available{border-color:#7fb59d;box-shadow:inset 0 4px var(--green)}
+.muted,small{color:var(--muted)}
+small{font-size:.875rem}
+.narrow{max-width:760px;margin:auto}
+label{display:grid;gap:7px;font-weight:650}
+input,select,button,.button{font:inherit;border-radius:11px}
+input,select{padding:12px;width:100%;color:inherit;background:#fff;border:1px solid #9db1a5;min-width:0}
+button,.button{display:inline-flex;justify-content:center;align-items:center;min-height:44px;padding:10px 17px;border:1px solid transparent;background:var(--green);color:#fff;text-decoration:none;font-weight:650;cursor:pointer;text-align:center}
+button.secondary,.button.secondary{background:#fff;color:var(--dark);border-color:#a9bdb1}
+button:disabled{background:#edf1ed;color:#52625a;border-color:var(--line);cursor:default}
+:focus-visible{outline:3px solid #3279df;outline-offset:3px}
+.error{color:#a22332;font-weight:650}
+.success{color:#165d42;font-weight:650}
+.flash:empty{display:none}
+progress{width:100%;height:12px;accent-color:var(--green)}
+.question{font-size:clamp(1.35rem,3vw,2rem);overflow-wrap:anywhere}
+.option{text-align:left;justify-content:flex-start;width:100%;background:#fff;color:var(--dark);border:1px solid #a9bdb1;gap:12px}
+.option[aria-pressed=true]{background:#e3f6d8;border-color:#2e7c60}
+.letter{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#edf4ef;flex:none}
+.pill{display:inline-block;border-radius:20px;background:#eaf3e6;color:#234f3e;padding:4px 10px;font-weight:650;font-size:.875rem}
+.scroll{overflow:auto}
+table{width:100%;border-collapse:collapse;text-align:left;min-width:520px}
+th,td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-size:.875rem}
+details{border-bottom:1px solid var(--line);padding-block:10px}
+summary{cursor:pointer;font-weight:650}
+details p{margin-top:8px;overflow-wrap:anywhere}
+.footer{border-top:1px solid var(--line);color:var(--muted);padding-block:22px;display:flex;gap:12px;justify-content:space-between;font-size:.875rem}
+@media(max-width:730px){.split,.grid{grid-template-columns:1fr}.split .hero{min-height:220px}.shell{width:calc(100% - 28px)}main{padding-top:24px}.band{padding:20px}}
