@@ -1,7 +1,8 @@
-from django.urls import re_path
-from diagnostics.views import api, health
+from django.urls import include, path, re_path
+from diagnostics.views import health
 
 urlpatterns = [
-    re_path(r"^api/(?P<route>.*?)/*$", api),
+    path("api/v1/", include("diagnostics.urls")),
+    path("api/", include("diagnostics.urls")),
     re_path(r"^health/?$", health),
 ]

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-from diagnostics.views import import_bank
+from diagnostics.services import import_bank
 
 
 class Command(BaseCommand):

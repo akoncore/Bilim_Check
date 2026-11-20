@@ -3,7 +3,8 @@ from django.core.cache import cache
 from django.core.management import call_command
 from django.test import Client, TestCase
 
-from .models import Question
+from .models import BankRevision, Question, Student
+from .services import bank_layout, import_bank
 
 
 class DiagnosticFlow(TestCase):
@@ -76,7 +77,44 @@ class DiagnosticFlow(TestCase):
     def test_rate_limit(self):
         from unittest.mock import patch
 
-        with patch("diagnostics.views.time.time", return_value=1_700_000_000):
+        with patch("diagnostics.services.time.time", return_value=1_700_000_000):
             for _ in range(10):
                 self.send("admin/login/", {"username": "teacher", "password": "wrong"}, status=401)
             self.send("admin/login/", {"username": "teacher", "password": "test-only"}, status=429)
+
+
+    def test_rest_pagination_preserves_filters_and_protects_data(self):
+        Student.objects.bulk_create([Student(name="Диана", grade=5), Student(name="Диас", grade=5),
+                                     Student(name="Диана", grade=6)])
+        self.send("v1/admin/students/", status=401)
+        self.send("v1/admin/login/", {"username": "teacher", "password": "test-only"})
+        page = self.send("v1/admin/students/?q=Ди&grade=5&page_size=1")
+        self.assertEqual(page["total"], 2)
+        self.assertEqual(page["items"][0]["name"], "Диас")
+        self.assertIn("grade=5", page["next"])
+        self.assertIn("page=2", page["next"])
+        self.assertIsNone(page["previous"])
+        second = self.send("v1/admin/students/?q=Ди&grade=5&page_size=1&page=2")
+        self.assertEqual(second["items"][0]["name"], "Диана")
+        self.assertIsNone(second["next"])
+        self.assertIn("page=1", second["previous"])
+        result = self.client.get("/api/v1/admin/students/?page_size=1000")
+        self.assertEqual(result.json()["page_size"], 100)
+        self.assertIn("no-store", result.headers["Cache-Control"])
+        self.send("v1/admin/students/?page=invalid", status=400)
+        self.send("v1/admin/results/?status=invalid", status=400)
+
+    def test_cache_version_changes_after_import(self):
+        before = BankRevision.objects.get(pk=1).version
+        layout = bank_layout(before)
+        with self.assertNumQueries(0):
+            self.assertEqual(bank_layout(before), layout)
+        questions = [
+            {"id": f"extra-{index}", "grade": 6, "topic": "Жаңа тақырып", "prompt": f"Тапсырма {index}",
+             "options": ["1", "2"], "correct_index": 1}
+            for index in range(2)
+        ]
+        import_bank({"questions": questions})
+        after = BankRevision.objects.get(pk=1).version
+        self.assertEqual(after, before + 1)
+        self.assertTrue(any(name == "Жаңа тақырып" for _, _, name in bank_layout(after)))

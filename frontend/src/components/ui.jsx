@@ -1,4 +1,5 @@
 import {useState} from "react";
+import {useMutation} from "../hooks/useMutation";
 
 export function Hero({label, title, children}) {
   return <section className="hero">
@@ -12,26 +13,19 @@ export function Message({value, success = false}) {
 }
 
 export function Form({className = "card stack", action, children, label, ...props}) {
-  const [busy, setBusy] = useState(false);
+  const {run, busy, error} = useMutation();
   const [notice, setNotice] = useState(null);
   async function submit(event) {
     event.preventDefault();
     const form = event.currentTarget;
-    setBusy(true);
     setNotice(null);
-    try {
-      const value = await action(new FormData(form), form);
-      if (value) setNotice({value, success: true});
-    } catch (error) {
-      setNotice({value: error.message});
-    } finally {
-      setBusy(false);
-    }
+    const value = await run(() => action(new FormData(form), form));
+    if (value) setNotice({value, success: true});
   }
   return <form {...props} className={className} onSubmit={submit}>
     {children}
     <div><button type="submit" disabled={busy}>{label}</button></div>
-    <Message {...notice}/>
+    <Message value={error || notice?.value} success={!error && notice?.success}/>
   </form>;
 }
 

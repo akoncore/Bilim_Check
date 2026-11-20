@@ -57,3 +57,4 @@ details p{margin-top:8px;overflow-wrap:anywhere}
 .footer{border-top:1px solid var(--line);color:var(--muted);padding-block:22px;display:flex;gap:12px;justify-content:space-between;font-size:.875rem}
 @media(max-width:730px){.split,.grid{grid-template-columns:1fr}.split .hero{min-height:220px}.shell{width:calc(100% - 28px)}main{padding-top:24px}.band{padding:20px}}
 #root{display:flex;flex-direction:column;min-height:100vh}
+.offline-banner{padding:12px 16px;border:1px solid #b69045;border-radius:11px;color:#674a19;background:#fff3d6}.filters{display:flex;align-items:end;flex-wrap:wrap;gap:12px}.filters label:first-of-type{flex:1 1 180px}

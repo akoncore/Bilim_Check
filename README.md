@@ -4,9 +4,9 @@
 
 | Папка | Назначение |
 | --- | --- |
-| `backend/` | Django API, модели, миграции PostgreSQL и банк задач |
-| `frontend/` | React и Vite |
-| `docker/` | Dockerfiles и Compose |
+| `backend/` | Django REST Framework, модели, миграции PostgreSQL и банк задач |
+| `frontend/` | React, Vite и устанавливаемая PWA |
+| `docker/` | Dockerfiles и Compose для PostgreSQL, Redis, Django и Nginx |
 | `nginx/` | Раздача React, проксирование API и HTTPS |
 
 ## Запуск
@@ -48,7 +48,18 @@ docker compose --env-file .env -f docker/compose.yaml exec backend python manage
 
 `correct_index` начинается с 0. Здесь правильный ответ — «−5». Повторный импорт того же `id` обновляет задачу для будущих тестов. Тесты, начатые до импорта, хранят свои формулировки и правильные ответы. Для участия в тесте в теме должно быть минимум две задачи.
 
+## Frontend и PWA
+
+- `frontend/src/pages/` — страницы ученика и учителя.
+- `frontend/src/layouts/` — общий каркас сайта и навигация кабинета.
+- `frontend/src/components/` — формы, результаты и импорт.
+- `frontend/src/hooks/` — отмена устаревших запросов, отправка форм, состояние сети и установка приложения.
+
+Установка PWA доступна в поддерживаемых браузерах на HTTPS или localhost. Production-сборка Vite генерирует `sw.js` с версией и списком статических файлов. При открытии страницы без сети отображается офлайн-экран. Для сдачи тестов и просмотра результатов нужна сеть. Service worker хранит только файлы интерфейса и офлайн-страницу. Регистрации, ответы и отчёты в кэш браузера не записываются.
+
 ## API
+
+Основной префикс REST API — `/api/v1/`. Префикс `/api/` сохранён для существующих клиентов. Маршруты в таблице показаны в совместимом виде.
 
 Запросы на запись используют JSON и заголовок `X-CSRFToken`. Токен возвращается в `GET /api/csrf/`. Доступ к данным учителя требует Django-сессии с `is_staff`.
 
@@ -68,7 +79,11 @@ docker compose --env-file .env -f docker/compose.yaml exec backend python manage
 | GET | `/api/admin/results/<id>/` | Подробный отчёт теста |
 | POST | `/api/admin/questions/import/` | Импорт банка |
 
-Списки поддерживают `page` и `page_size` до 100. Темы кэшируются по версии банка. Лимиты записи хранятся в PostgreSQL и применяются ко всем экземплярам Django.
+Списки возвращают `items`, `total`, `page`, `page_size`, `next` и `previous`. По умолчанию выдаётся 20 записей, максимум — 100. Фильтры `grade` и `q` доступны для учеников и результатов. Для результатов также доступен `status=completed|in_progress`.
+
+Пример: `GET /api/v1/admin/results/?grade=7&status=completed&page=2&page_size=20`.
+
+Redis хранит список тем по версии банка в течение часа. Успешный импорт меняет версию. При недоступности Redis Django читает темы из PostgreSQL. Результаты и данные пользователей в Redis не кэшируются. Лимиты записи хранятся в PostgreSQL и применяются ко всем экземплярам Django. Ответ `429` содержит заголовок `Retry-After`.
 
 ## Домен, HTTPS и CI/CD
 
