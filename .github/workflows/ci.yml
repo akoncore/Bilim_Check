@@ -10,24 +10,47 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: bilim
+          POSTGRES_USER: bilim
+          POSTGRES_PASSWORD: ci-db-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bilim -d bilim"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DJANGO_SECRET_KEY: ci-only-secret
+      POSTGRES_PASSWORD: ci-db-password
+      HTTP_PORT: "8080"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m unittest discover -s tests -v
-      - run: node --check web/app.js
-      - name: Build and smoke test Compose
+      - name: Test Django with PostgreSQL
+        working-directory: backend
         env:
-          ADMIN_PASSWORD: ci-only-password
-          HTTP_PORT: "8080"
+          POSTGRES_HOST: 127.0.0.1
         run: |
-          docker compose up -d --build --wait
+          pip install -r requirements.txt
+          python manage.py makemigrations --check --dry-run --settings=bilim.test_settings
+          python manage.py test --settings=bilim.test_settings -v 2
+      - name: Build and smoke test full stack
+        run: |
+          docker compose -f docker/compose.yaml up -d --build --wait
           curl --fail --retry 10 --retry-connrefused http://127.0.0.1:8080/health
+          curl --fail http://127.0.0.1:8080/api/csrf/
+          curl --fail http://127.0.0.1:8080/test/ | grep -F '/assets/'
+      - if: failure()
+        run: docker compose -f docker/compose.yaml logs --no-color
       - if: always()
-        env:
-          ADMIN_PASSWORD: ci-only-password
-        run: docker compose down -v
+        run: docker compose -f docker/compose.yaml down -v
 
   deploy:
     if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.DEPLOY_ENABLED == 'true'
@@ -49,5 +72,5 @@ jobs:
           install -m 600 /dev/null ~/.ssh/deploy
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          tar -czf "${RUNNER_TEMP}/bilim-check.tar.gz" app.py question-bank.json web Dockerfile compose.yaml compose.https.yaml .dockerignore deploy/http.conf deploy/proxy.conf deploy/https.conf.template
-          ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" 'cd /opt/bilim-check && tar -xzf - && docker compose -f compose.yaml -f compose.https.yaml up -d --build --wait' < "${RUNNER_TEMP}/bilim-check.tar.gz"
+          git archive --format=tar.gz -o "${RUNNER_TEMP}/bilim-check.tar.gz" HEAD backend frontend docker nginx .dockerignore
+          ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST" 'cd /opt/bilim-check && tar -xzf - && docker compose --env-file .env -f docker/compose.yaml -f docker/compose.https.yaml up -d --build --wait' < "${RUNNER_TEMP}/bilim-check.tar.gz"

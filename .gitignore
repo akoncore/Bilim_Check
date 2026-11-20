@@ -1,4 +1,7 @@
 .env
 data/
 __pycache__/
-deploy/acme/
+*.pyc
+node_modules/
+frontend/dist/
+nginx/acme/
